@@ -139,7 +139,8 @@ func main() {
 				os.Exit(1)
 			}
 			client := pb.NewCliToHubClient(conn)
-			reporter := commanders.NewReporter(client)
+			logger := gpbackupUtils.GetLogger()
+			reporter := commanders.NewReporter(client, logger)
 			err := reporter.OverallUpgradeStatus()
 			if err != nil {
 				gpbackupUtils.GetLogger().Error(err.Error())
