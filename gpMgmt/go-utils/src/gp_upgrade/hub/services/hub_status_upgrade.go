@@ -13,7 +13,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func (s *cliToHubListenerImpl) StatusUpgrade(ctx context.Context, in *pb.StatusUpgradeRequest) (*pb.StatusUpgradeReply, error) {
+func (s *CatchAllCliToHubListenerImpl) StatusUpgrade(ctx context.Context, in *pb.StatusUpgradeRequest) (*pb.StatusUpgradeReply, error) {
 	gpbackupUtils.GetLogger().Info("starting StatusUpgrade")
 	demoStepStatus := &pb.UpgradeStepStatus{
 		Step:   pb.UpgradeSteps_CHECK_CONFIG,
