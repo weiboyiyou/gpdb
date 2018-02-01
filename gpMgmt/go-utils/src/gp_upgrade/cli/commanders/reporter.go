@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	pb "gp_upgrade/idl"
+	"github.com/pkg/errors"
 )
 
 type Reporter struct {
@@ -39,7 +40,8 @@ func NewReporter(client pb.CliToHubClient, logger Logger) *Reporter {
 func (r *Reporter) OverallUpgradeStatus() error {
 	reply, err := r.client.StatusUpgrade(context.Background(), &pb.StatusUpgradeRequest{})
 	if err != nil {
-		return err
+		// find some way to expound on the error message? Integration test failing because we no longer log here
+		return errors.New("Unable to connect to hub: " + err.Error())
 	}
 
 	for i := 0; i < len(reply.ListOfUpgradeStepStatuses); i++ {

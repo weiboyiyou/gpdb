@@ -17,7 +17,6 @@ func (s *Bootstrapper) CheckSeginstall(ctx context.Context,
 	//
 	//gpbackupUtils.GetLogger().Info("starting CheckSeginstall()")
 	//
-	//successReply := &pb.CheckSeginstallReply{}
-	//return successReply, nil
-	return nil, nil
+	successReply := &pb.CheckSeginstallReply{}
+	return successReply, nil
 }

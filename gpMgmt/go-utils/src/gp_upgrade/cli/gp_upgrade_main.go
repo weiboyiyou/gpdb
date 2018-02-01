@@ -143,7 +143,7 @@ func main() {
 			reporter := commanders.NewReporter(client, logger)
 			err := reporter.OverallUpgradeStatus()
 			if err != nil {
-				gpbackupUtils.GetLogger().Error(err.Error())
+				logger.Error(err.Error())
 				os.Exit(1)
 			}
 		},
