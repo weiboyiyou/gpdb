@@ -12,32 +12,26 @@ var _ = Describe("ClusterSsher", func() {
 		cw := newSpyChecklistWriter()
 		clusterSsher := services.NewClusterSsher(cw)
 		clusterSsher.VerifySoftware([]string{"doesn't matter"})
-		Expect(cw.inProgressCalls()).To(Equal(1))
-		Expect(cw.stepRecorded()).To(Equal("seginstall"))
+		Expect(cw.freshStateDirs).To(ContainElement("seginstall"))
+		Expect(cw.stepsMarkedInProgress).To(ContainElement("seginstall"))
 	})
 })
 
 func newSpyChecklistWriter() *spyChecklistWriter {
-	return &spyChecklistWriter{
-		numInProgressCalls: 0,
-		stepRecord:         "",
-	}
+	return &spyChecklistWriter{}
 }
 
 type spyChecklistWriter struct {
-	numInProgressCalls int
-	stepRecord         string
+	freshStateDirs        []string
+	stepsMarkedInProgress []string
 }
 
-func (s *spyChecklistWriter) inProgressCalls() int {
-	return s.numInProgressCalls
+func (s *spyChecklistWriter) MarkInProgress(step string) error {
+	s.stepsMarkedInProgress = append(s.stepsMarkedInProgress, step)
+	return nil
 }
 
-func (s *spyChecklistWriter) stepRecorded() string {
-	return s.stepRecord
-}
-
-func (s *spyChecklistWriter) MarkInProgress(step string) {
-	s.numInProgressCalls += 1
-	s.stepRecord = step
+func (s *spyChecklistWriter) ResetStateDir(step string) error {
+	s.freshStateDirs = append(s.freshStateDirs, step)
+	return nil
 }
