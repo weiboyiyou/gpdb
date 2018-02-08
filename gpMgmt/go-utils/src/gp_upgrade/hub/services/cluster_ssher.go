@@ -1,65 +1,49 @@
 package services
 
 import (
+	"gp_upgrade/hub/logger"
 	"gp_upgrade/utils"
-	"path"
-
-	"os"
-
-	"github.com/pkg/errors"
 )
 
 type ClusterSsher struct {
 	checklistWriter ChecklistWriter
+	logger          logger.LogEntry
 }
 
 type ChecklistWriter interface {
 	MarkInProgress(string) error
 	ResetStateDir(string) error
+	MarkFailed(string) error
+	MarkComplete(string) error
 }
 
-type ChecklistWriterImpl struct {
-	pathToStateDir string
+func NewClusterSsher(cw ChecklistWriter, logger logger.LogEntry) *ClusterSsher {
+	return &ClusterSsher{checklistWriter: cw, logger: logger}
 }
 
-func (c *ChecklistWriterImpl) MarkInProgress(step string) error {
-	_, err := utils.System.OpenFile(path.Join(c.pathToStateDir, "in.progress"), os.O_RDONLY|os.O_CREATE, 0700)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *ChecklistWriterImpl) ResetStateDir(step string) error {
-	homeDirectory := utils.System.Getenv("HOME")
-	if homeDirectory == "" {
-		return errors.New("Could not find the home directory environment variable")
-
-	}
-	pathToStateDir := path.Join(homeDirectory, ".gp_upgrade", step)
-	err := utils.System.RemoveAll(pathToStateDir)
-	if err != nil {
-		return err
-	}
-	err = utils.System.MkdirAll(pathToStateDir, 0700)
-	if err != nil {
-		return err
-	}
-	c.pathToStateDir = pathToStateDir
-	return nil
-
-}
-
-func NewChecklistWriterImpl() *ChecklistWriterImpl {
-	return &ChecklistWriterImpl{}
-}
-
-func NewClusterSsher(cw ChecklistWriter) *ClusterSsher {
-	return &ClusterSsher{checklistWriter: cw}
-}
-
-func (c *ClusterSsher) VerifySoftware([]string) {
+func (c *ClusterSsher) VerifySoftware(hostnames []string) {
 	c.checklistWriter.ResetStateDir("seginstall")
-	c.checklistWriter.MarkInProgress("seginstall")
+	err := c.checklistWriter.MarkInProgress("seginstall")
+	if err != nil {
+		c.logger.Error <- err.Error()
+	}
+	var anyFailed = false
+	for _, hostname := range hostnames {
+		_, err := utils.System.ExecCmdOutput("ssh", hostname)
+		if err != nil {
+			c.logger.Error <- err.Error()
+			anyFailed = true
+		}
+	}
+	if anyFailed {
+		err = c.checklistWriter.MarkFailed("seginstall")
+		if err != nil {
+			c.logger.Error <- err.Error()
+		}
+		return
+	}
+	err = c.checklistWriter.MarkComplete("seginstall")
+	if err != nil {
+		c.logger.Error <- err.Error()
+	}
 }
