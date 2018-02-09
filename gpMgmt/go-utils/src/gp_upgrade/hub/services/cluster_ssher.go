@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"gp_upgrade/hub/logger"
 	"gp_upgrade/utils"
 )
@@ -29,7 +30,8 @@ func (c *ClusterSsher) VerifySoftware(hostnames []string) {
 	}
 	var anyFailed = false
 	for _, hostname := range hostnames {
-		_, err := utils.System.ExecCmdOutput("ssh", hostname)
+		_, err := utils.System.ExecCmdOutput("ssh",
+			fmt.Sprintf("-o 'StrictHostKeyChecking=no' %s ls /usr/local/gpdb/greenplum_path.sh", hostname))
 		if err != nil {
 			c.logger.Error <- err.Error()
 			anyFailed = true
